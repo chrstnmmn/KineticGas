@@ -234,33 +234,41 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function drawBox() {
     if (isExploding) {
-      explosionProgress++;
-      const maxDistort = 30;
-
+      // Draw explosion particles
       ctx.save();
-      ctx.strokeStyle = `hsl(${explosionProgress * 2}, 100%, 50%)`;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-
-      const distortX = maxDistort * Math.sin(explosionProgress * 0.2);
-      const distortY = maxDistort * Math.cos(explosionProgress * 0.15);
-
-      ctx.moveTo(boxX - distortX, boxY - distortY);
-      ctx.lineTo(boxX + boxWidth + distortX, boxY - distortY);
-      ctx.lineTo(boxX + boxWidth + distortX * 0.7, boxY + boxHeight + distortY);
-      ctx.lineTo(boxX - distortX * 0.7, boxY + boxHeight + distortY);
-      ctx.closePath();
-      ctx.stroke();
+      for (const fragment of explosionParticles) {
+        if (fragment.width) { // This is a box fragment
+          ctx.save();
+          ctx.translate(fragment.x, fragment.y);
+          ctx.rotate(fragment.rotation);
+          ctx.globalAlpha = fragment.alpha;
+          ctx.fillStyle = fragment.color;
+          ctx.fillRect(-fragment.width / 2, -fragment.height / 2, fragment.width, fragment.height);
+          ctx.restore();
+        }
+      }
       ctx.restore();
 
+      // Draw shockwave
+      if (explosionProgress < explosionDuration / 2) {
+        const radius = explosionProgress * 10;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(boxX + boxWidth / 2, boxY + boxHeight / 2, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255, 165, 0, ${1 - explosionProgress / explosionDuration})`;
+        ctx.lineWidth = 5;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      explosionProgress++;
       if (explosionProgress >= explosionDuration) {
         isExploding = false;
-        explosionProgress = 0;
       }
     } else if (!isExploded) {
+      // Draw normal box
       ctx.strokeStyle = '#4361ee';
       ctx.lineWidth = 3;
-      ctx.setLineDash([]);
       ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
       ctx.fillStyle = 'rgba(67, 97, 238, 0.05)';
       ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
@@ -295,10 +303,12 @@ document.addEventListener('DOMContentLoaded', function () {
     isExploding = true;
     explosionProgress = 0;
 
+    // Store explosion stats
     maxVolumeBeforeExplosion = containerVolume;
     pressureAtExplosion = pressure;
     particlesAtExplosion = particles.length;
 
+    // Update UI
     document.getElementById('maxVolumeValue').textContent = maxVolumeBeforeExplosion.toFixed(4);
     document.getElementById('explosionPressureValue').textContent = pressureAtExplosion.toFixed(1);
     document.getElementById('explosionParticlesValue').textContent = particlesAtExplosion;
@@ -306,12 +316,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const centerX = boxX + boxWidth / 2;
     const centerY = boxY + boxHeight / 2;
-    const explosionPower = Math.min(30, Math.max(5, pressure / 50));
+    const explosionPower = Math.min(50, Math.max(10, pressure / 30));
 
+    // Create box fragments
+    const fragmentCount = 20;
+    for (let i = 0; i < fragmentCount; i++) {
+      const size = 10 + Math.random() * 20;
+      const fragment = {
+        x: boxX + Math.random() * boxWidth,
+        y: boxY + Math.random() * boxHeight,
+        width: size,
+        height: size,
+        vx: (Math.random() - 0.5) * explosionPower * 2,
+        vy: (Math.random() - 0.5) * explosionPower * 2 - 2,
+        rotation: Math.random() * Math.PI * 2,
+        rotationSpeed: (Math.random() - 0.5) * 0.2,
+        alpha: 1,
+        decay: 0.005 + Math.random() * 0.01,
+        color: `hsl(${Math.random() * 30 + 10}, 100%, 50%)`
+      };
+      explosionParticles.push(fragment);
+    }
+
+    // Convert existing particles to explosion particles
     particles.forEach((p) => {
       const dx = p.x - centerX;
       const dy = p.y - centerY;
-      const distance = Math.max(0.1, Math.sqrt(dx * dx + dy * dy));
+      const distance = Math.max(1, Math.sqrt(dx * dx + dy * dy));
       const force = explosionPower * (1 + Math.random() * 0.5);
       p.vx = (dx / distance) * force;
       p.vy = (dy / distance) * force - 2;
@@ -321,11 +352,39 @@ document.addEventListener('DOMContentLoaded', function () {
       p.decay = 0.01 + Math.random() * 0.02;
     });
 
-    for (let i = 0; i < 50; i++) {
+    // Add additional explosion particles
+    for (let i = 0; i < 100; i++) {
       const p = new Particle(centerX, centerY, true);
       p.alpha = 1;
-      p.decay = 0.01 + Math.random() * 0.02;
+      p.decay = 0.005 + Math.random() * 0.015;
       explosionParticles.push(p);
+    }
+
+    // Play explosion sound
+    playExplosionSound();
+  }
+
+  function playExplosionSound() {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      // Explosion sound parameters
+      oscillator.type = 'sawtooth';
+      oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1);
+
+      gainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1);
+
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 1);
+    } catch (e) {
+      console.log('AudioContext error:', e);
     }
   }
 
@@ -432,26 +491,51 @@ document.addEventListener('DOMContentLoaded', function () {
       handleCollisions();
     }
 
+    // Update and draw particles
     for (let i = particles.length - 1; i >= 0; i--) {
       particles[i].update();
       particles[i].draw();
-
       if (particles[i].isFinished && particles[i].isFinished()) {
         particles.splice(i, 1);
       }
     }
 
+    // Update and draw explosion particles
     for (let i = explosionParticles.length - 1; i >= 0; i--) {
-      explosionParticles[i].update();
-      explosionParticles[i].draw();
+      const p = explosionParticles[i];
 
-      if (explosionParticles[i].isFinished()) {
+      // Update position and rotation for fragments
+      if (p.width) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.1; // Gravity
+        p.rotation += p.rotationSpeed;
+        p.alpha -= p.decay;
+      }
+      // Regular particles are handled by their own update method
+
+      // Draw if it's a fragment (particles draw themselves)
+      if (p.width) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.width / 2, -p.height / 2, p.width, p.height);
+        ctx.restore();
+      } else {
+        p.draw();
+      }
+
+      // Remove if faded out
+      if (p.alpha <= 0) {
         explosionParticles.splice(i, 1);
       }
     }
 
     requestAnimationFrame(animate);
   }
+
 
   // Event listeners
   document.getElementById('boxWidth').addEventListener('input', function () {
