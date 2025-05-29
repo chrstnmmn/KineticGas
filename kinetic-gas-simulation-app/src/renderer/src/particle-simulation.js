@@ -31,19 +31,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Initialize canvas size
   function handleResize() {
-    const containerWidth = Math.min(window.innerWidth * 0.6, 600);
-    canvas.width = containerWidth;
-    canvas.height = containerWidth;
-    container.style.width = `${containerWidth}px`;
-    container.style.height = `${containerWidth}px`;
-    resizeCanvas();
-  }
+    // Get the available space in the middle column
+    const middleColumn = document.querySelector('.middle-column');
+    const maxAvailableSize = middleColumn.clientWidth;
 
+    // Calculate size (square, fitting available width)
+    const size = Math.min(maxAvailableSize, window.innerHeight * 0.7);
+
+    // Set canvas dimensions
+    canvas.width = size;
+    canvas.height = size;
+
+    // Update container dimensions
+    const container = document.querySelector('.canvas-container');
+    container.style.width = `${size}px`;
+    container.style.height = `${size}px`;
+
+    // Center the box
+    boxX = (size - boxWidth) / 2;
+    boxY = (size - boxHeight) / 2;
+
+    calculateVolume();
+    updatePressure();
+  }
   // Set initial canvas size and box position
   function resizeCanvas() {
     // Update slider max values to match canvas size
-    document.getElementById('boxWidth').max = canvas.width;
-    document.getElementById('boxHeight').max = canvas.height;
+    const maxDimension = Math.min(canvas.width, canvas.height);
+    document.getElementById('boxWidth').max = maxDimension;
+    document.getElementById('boxHeight').max = maxDimension;
 
     // Center the box
     boxX = (canvas.width - boxWidth) / 2;
@@ -166,7 +182,12 @@ document.addEventListener('DOMContentLoaded', function () {
       this.x += this.vx;
       this.y += this.vy;
 
-      if (!this.isExplosionParticle) {
+      if (this.isExplosionParticle) {
+        this.vy += 0.05; // Gravity effect
+        if (this.alpha !== undefined) {
+          this.alpha -= this.decay;
+        }
+      } else if (!isExploded) {
         this.vx *= 0.999;
         this.vy *= 0.999;
       }
@@ -192,10 +213,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     draw() {
+      ctx.save();
+      if (this.alpha !== undefined) {
+        ctx.globalAlpha = Math.max(0, this.alpha);
+      }
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
       ctx.fillStyle = this.color;
       ctx.fill();
+      ctx.restore();
+    }
+
+    isFinished() {
+      return this.alpha !== undefined && this.alpha <= 0;
     }
   }
 
@@ -281,6 +311,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const centerY = boxY + boxHeight / 2;
     const explosionPower = Math.min(30, Math.max(5, pressure / 50));
 
+    // Convert existing particles to explosion particles
     particles.forEach((p) => {
       const dx = p.x - centerX;
       const dy = p.y - centerY;
@@ -289,13 +320,18 @@ document.addEventListener('DOMContentLoaded', function () {
       p.vx = (dx / distance) * force;
       p.vy = (dy / distance) * force - 2;
       p.color = `hsl(${Math.random() * 60}, 100%, 50%)`;
+      p.isExplosionParticle = true;
+      p.alpha = 1;
+      p.decay = 0.01 + Math.random() * 0.02;
     });
 
+    // Add additional explosion particles
     for (let i = 0; i < 50; i++) {
-      explosionParticles.push(new Particle(centerX, centerY, true));
+      const p = new Particle(centerX, centerY, true);
+      p.alpha = 1;
+      p.decay = 0.01 + Math.random() * 0.02;
+      explosionParticles.push(p);
     }
-
-    playExplosionSound();
   }
 
   function updateGasLawExplanation() {
@@ -313,9 +349,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 Pressure is at ${(pressureRatio * 100).toFixed(0)}% of container strength!
             </span>
             ${pressure > maxPressure
-              ? "<div style='margin-top: 4px;'>The container couldn't withstand the pressure and ruptured!</div>"
-              : ''
-            }
+          ? "<div style='margin-top: 4px;'>The container couldn't withstand the pressure and ruptured!</div>"
+          : ''
+        }
         </div>
       `;
     }
@@ -404,6 +440,15 @@ document.addEventListener('DOMContentLoaded', function () {
       p.draw();
     });
 
+    for (let i = particles.length - 1; i >= 0; i--) {
+      particles[i].update();
+      particles[i].draw();
+
+      if (particles[i].isFinished && particles[i].isFinished()) {
+        particles.splice(i, 1);
+      }
+    }
+
     for (let i = explosionParticles.length - 1; i >= 0; i--) {
       explosionParticles[i].update();
       explosionParticles[i].draw();
@@ -455,7 +500,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   document.getElementById('particleCount').addEventListener('input', function () {
     particleCount = parseInt(this.value);
-    if (isNaN(particleCount)) particleCount= 1;
+    if (isNaN(particleCount)) particleCount = 1;
     this.value = particleCount;
   });
 

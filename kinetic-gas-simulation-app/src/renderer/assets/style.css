@@ -12,6 +12,12 @@
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
+html, body {
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  width: 100%;
+}
+
+
 body {
   font-family:
     'Inter',
@@ -28,34 +34,32 @@ body {
 }
 
 .container {
-  background-color: var(--surface);
-  border-radius: 16px;
-  box-shadow: var(--shadow);
-  padding: 2rem;
-  width: 95%;
+  /* Update container styles */
+  width: 100%;
   max-width: 1800px;
   margin: 2rem auto;
+  padding: 0 1rem; /* Add padding to prevent edge sticking */
+  box-sizing: border-box; /* Include padding in width calculation */
 }
 
 /* Three Column Layout */
 .three-column-layout {
   display: flex;
-  gap: 2rem;
+  gap: 1rem; /* Reduced gap for smaller screens */
   width: 100%;
+  flex-wrap: wrap; /* Allow columns to wrap on small screens */
 }
 
-.left-column {
+.left-column, .right-column {
   flex: 1;
   min-width: 280px;
-  max-width: 320px;
+  max-width: 100%; /* Allow columns to shrink */
 }
 
 .middle-column {
   flex: 2;
-  min-width: 500px;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  min-width: 0; /* Important for flexbox shrinking */
+  width: 100%; /* Take full width */
 }
 
 .right-column {
@@ -112,24 +116,24 @@ body {
   gap: 1rem;
 }
 
+/* Update the .canvas-container styles */
 .canvas-container {
   position: relative;
   background-color: #0f0f15;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--border);
-  width: 60vw;
-  height: 60vw;
-  max-width: 600px;
-  max-height: 600px;
+  width: 100%;
+  max-width: 100%; /* Ensure it doesn't overflow */
   margin: 0 auto;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 1 / 1; /* Maintain square ratio */
 }
-
+/* Update the canvas styles */
 #particleCanvas {
   display: block;
   width: 100%;
   height: 100%;
+  object-fit: contain; /* Prevent stretching */
 }
 
 .simulation-info {
@@ -246,7 +250,7 @@ body {
 .controls {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: .5rem;
 }
 
 .control-group {
@@ -307,6 +311,26 @@ input[type='range']::-webkit-slider-thumb:hover {
   background: var(--primary-dark);
 }
 
+.scrollable-law-section {
+        height: calc(100vh - 40px); /* Adjust based on your layout */
+        overflow-y: auto;
+        padding-right: 10px;
+      }
+      .scrollable-law-section::-webkit-scrollbar {
+        width: 8px;
+      }
+      .scrollable-law-section::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+      .scrollable-law-section::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+      }
+      .scrollable-law-section::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+
 button {
   background-color: var(--primary);
   color: white;
@@ -338,32 +362,25 @@ button:hover {
   .three-column-layout {
     flex-direction: column;
   }
-
-  .left-column,
-  .middle-column,
-  .right-column {
+  
+  .left-column, .middle-column, .right-column {
     width: 100%;
-    max-width: none;
-    min-width: auto;
-  }
-
-  .applications-grid {
-    grid-template-columns: repeat(2, 1fr);
+    max-width: 100%;
   }
 }
 
 @media (max-width: 768px) {
   .container {
-    padding: 1rem;
+    padding: 0 0.5rem;
+    margin: 1rem auto;
   }
-
-  .applications-grid {
-    grid-template-columns: 1fr;
-  }
-
+  
   .canvas-container {
-    width: 90vw;
-    height: 90vw;
+    padding-bottom: 100%; /* Keep square on mobile */
+  }
+  
+  .law-explanation-card, .applications-section, .control-group {
+    padding: 1rem;
   }
 }
 
