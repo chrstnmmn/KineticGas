@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function () {
   // Simulation elements
   const canvas = document.getElementById('particleCanvas');
   const ctx = canvas.getContext('2d');
-  const container = document.querySelector('#gasContainer');
 
   // Simulation parameters
   let particles = [];
@@ -28,42 +27,47 @@ document.addEventListener('DOMContentLoaded', function () {
   let isExploding = false;
   let explosionProgress = 0;
   const explosionDuration = 60; // frames
+  const MAX_BOX_SIZE = 2000;
 
-  // Initialize canvas size
-  function handleResize() {
-    // Get the available space in the middle column
-    const middleColumn = document.querySelector('.middle-column');
-    const maxAvailableSize = middleColumn.clientWidth;
+  // Center the box in the canvas
+  function centerBox() {
+    boxX = (canvas.width - boxWidth) / 2;
+    boxY = (canvas.height - boxHeight) / 2;
+  }
 
-    // Calculate size (square, fitting available width)
-    const size = Math.min(maxAvailableSize, window.innerHeight * 0.7);
+  // Update box dimensions while maintaining center
+  function updateBoxDimensions() {
+    // Get new dimensions from inputs
+    boxWidth = Math.min(parseInt(document.getElementById('boxWidthInput').value), MAX_BOX_SIZE);
+    boxHeight = Math.min(parseInt(document.getElementById('boxHeightInput').value), MAX_BOX_SIZE);
 
-    // Set canvas dimensions
-    canvas.width = size;
-    canvas.height = size;
+    // Update UI elements
+    document.getElementById('boxWidth').value = boxWidth;
+    document.getElementById('boxHeight').value = boxHeight;
+    document.getElementById('boxWidthInput').value = boxWidth;
+    document.getElementById('boxHeightInput').value = boxHeight;
+    document.getElementById('boxWidthValue').textContent = boxWidth;
+    document.getElementById('boxHeightValue').textContent = boxHeight;
 
-    // Update container dimensions
-    const container = document.querySelector('.canvas-container');
-    container.style.width = `${size}px`;
-    container.style.height = `${size}px`;
-
-    // Center the box
-    boxX = (size - boxWidth) / 2;
-    boxY = (size - boxHeight) / 2;
+    // Re-center the box
+    centerBox();
 
     calculateVolume();
     updatePressure();
   }
-  // Set initial canvas size and box position
-  function resizeCanvas() {
-    // Update slider max values to match canvas size
-    const maxDimension = Math.min(canvas.width, canvas.height);
-    document.getElementById('boxWidth').max = maxDimension;
-    document.getElementById('boxHeight').max = maxDimension;
 
-    // Center the box
-    boxX = (canvas.width - boxWidth) / 2;
-    boxY = (canvas.height - boxHeight) / 2;
+  // Handle window resize
+  function handleResize() {
+    const simulationContainer = document.querySelector('.simulation-container');
+    canvas.width = simulationContainer.clientWidth;
+    canvas.height = window.innerHeight * 0.7;
+
+    const gasContainer = document.querySelector('.canvas-container');
+    gasContainer.style.width = `${canvas.width}px`;
+    gasContainer.style.height = `${canvas.height}px`;
+
+    // Center the box after resize
+    centerBox();
 
     calculateVolume();
     updatePressure();
@@ -80,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Calculate pressure using Ideal Gas Law: P = nRT/V
   function calculatePressure() {
     const moles = particles.length * PARTICLE_MOLES;
-    if (containerVolume <= 0) return Infinity; // Avoid division by zero
+    if (containerVolume <= 0) return Infinity;
     const pressurePascals = (moles * IDEAL_GAS_CONSTANT * temperature) / containerVolume;
     return pressurePascals / 1000; // Convert Pa to kPa
   }
@@ -107,27 +111,27 @@ document.addEventListener('DOMContentLoaded', function () {
     updateGasLawExplanation();
   }
 
-  // Particle class with explosion safety checks
+  // Particle class
   class Particle {
     constructor(centerX, centerY, isExplosion = false) {
       this.radius = 3 + Math.random() * 3;
       this.isExplosionParticle = isExplosion;
-      this.mass = this.radius * 0.5; // Mass proportional to size
+      this.mass = this.radius * 0.5;
 
       if (isExplosion) {
         this.x = centerX;
         this.y = centerY;
       } else {
-        const spawnRadius = Math.min(canvas.width, canvas.height) * 0.1;
+        const spawnRadius = Math.min(boxWidth, boxHeight) * 0.4;
         const angle = Math.random() * Math.PI * 2;
         const distance = Math.random() * spawnRadius;
         this.x = Math.max(
-          this.radius,
-          Math.min(centerX + Math.cos(angle) * distance, canvas.width - this.radius)
+          boxX + this.radius,
+          Math.min(centerX + Math.cos(angle) * distance, boxX + boxWidth - this.radius)
         );
         this.y = Math.max(
-          this.radius,
-          Math.min(centerY + Math.sin(angle) * distance, canvas.height - this.radius)
+          boxY + this.radius,
+          Math.min(centerY + Math.sin(angle) * distance, boxY + boxHeight - this.radius)
         );
       }
 
@@ -149,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const dx = other.x - this.x;
       const dy = other.y - this.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      if (distance === 0) return; // Avoid division by zero
+      if (distance === 0) return;
       const nx = dx / distance;
       const ny = dy / distance;
 
@@ -183,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function () {
       this.y += this.vy;
 
       if (this.isExplosionParticle) {
-        this.vy += 0.05; // Gravity effect
+        this.vy += 0.05;
         if (this.alpha !== undefined) {
           this.alpha -= this.decay;
         }
@@ -193,7 +197,6 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       if (!isExploded || this.isExplosionParticle) {
-        // Check collisions with box walls
         if (this.x < boxX + this.radius || this.x > boxX + boxWidth - this.radius) {
           this.vx = -this.vx * 0.9;
           this.x = Math.max(boxX + this.radius, Math.min(this.x, boxX + boxWidth - this.radius));
@@ -232,16 +235,13 @@ document.addEventListener('DOMContentLoaded', function () {
   function drawBox() {
     if (isExploding) {
       explosionProgress++;
-      const explosionSize = explosionProgress / explosionDuration;
       const maxDistort = 30;
 
-      // Draw exploding box
       ctx.save();
       ctx.strokeStyle = `hsl(${explosionProgress * 2}, 100%, 50%)`;
       ctx.lineWidth = 3;
       ctx.beginPath();
 
-      // Distorted rectangle for explosion effect
       const distortX = maxDistort * Math.sin(explosionProgress * 0.2);
       const distortY = maxDistort * Math.cos(explosionProgress * 0.15);
 
@@ -258,7 +258,6 @@ document.addEventListener('DOMContentLoaded', function () {
         explosionProgress = 0;
       }
     } else if (!isExploded) {
-      // Draw normal box
       ctx.strokeStyle = '#4361ee';
       ctx.lineWidth = 3;
       ctx.setLineDash([]);
@@ -300,18 +299,15 @@ document.addEventListener('DOMContentLoaded', function () {
     pressureAtExplosion = pressure;
     particlesAtExplosion = particles.length;
 
-    // Update explosion stats display
     document.getElementById('maxVolumeValue').textContent = maxVolumeBeforeExplosion.toFixed(4);
     document.getElementById('explosionPressureValue').textContent = pressureAtExplosion.toFixed(1);
     document.getElementById('explosionParticlesValue').textContent = particlesAtExplosion;
     document.getElementById('explosionStats').style.display = 'block';
 
-    // Add explosion particles
     const centerX = boxX + boxWidth / 2;
     const centerY = boxY + boxHeight / 2;
     const explosionPower = Math.min(30, Math.max(5, pressure / 50));
 
-    // Convert existing particles to explosion particles
     particles.forEach((p) => {
       const dx = p.x - centerX;
       const dy = p.y - centerY;
@@ -325,7 +321,6 @@ document.addEventListener('DOMContentLoaded', function () {
       p.decay = 0.01 + Math.random() * 0.02;
     });
 
-    // Add additional explosion particles
     for (let i = 0; i < 50; i++) {
       const p = new Particle(centerX, centerY, true);
       p.alpha = 1;
@@ -343,13 +338,13 @@ document.addEventListener('DOMContentLoaded', function () {
     let warningMessage = '';
     if (pressure > maxPressure * 0.8 && !isExploded) {
       warningMessage = `
-        <div class="pressure-warning" style="margin-top: 8px; padding: 8px; background-color: rgba(231, 76, 60, 0.1); border-radius: 4px; border-left: 3px solid #e74c3c;">
+        <div class="pressure-warning">
             <strong style="color: #e74c3c;">${pressure > maxPressure ? 'EXPLODED!' : 'WARNING:'}</strong>
             <span style="color: #e74c3c;">
                 Pressure is at ${(pressureRatio * 100).toFixed(0)}% of container strength!
             </span>
             ${pressure > maxPressure
-          ? "<div style='margin-top: 4px;'>The container couldn't withstand the pressure and ruptured!</div>"
+          ? "<div>The container couldn't withstand the pressure and ruptured!</div>"
           : ''
         }
         </div>
@@ -358,8 +353,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     explanationElement.innerHTML = `
       <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-          <div style="font-size: 1.5rem; color: var(--primary);">PV = nRT</div>
-          <div style="flex-grow: 1; border-top: 1px dashed var(--border);"></div>
+          <div style="font-size: 1.5rem; color: #4361ee;">PV = nRT</div>
+          <div style="flex-grow: 1; border-top: 1px dashed #ddd;"></div>
       </div>
       
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
@@ -376,7 +371,7 @@ document.addEventListener('DOMContentLoaded', function () {
               <div style="font-size: 1.1rem; font-weight: bold; color: ${document.getElementById('pressureValue').style.color}">
                   P = ${pressure.toFixed(1)} kPa
               </div>
-              <div style="font-size: 0.85rem; color: var(--text-secondary)">
+              <div style="font-size: 0.85rem; color: #7f8c8d">
                   (Max: ${maxPressure} kPa)
               </div>
           </div>
@@ -384,8 +379,8 @@ document.addEventListener('DOMContentLoaded', function () {
       
       ${warningMessage}
       
-      <div style="margin-top: 8px; font-size: 0.85rem; color: var(--text-secondary)">
-          <strong>Experiment:</strong> Try changing temperature, adding particles, or changing the container strength to see how pressure changes.
+      <div style="margin-top: 8px; font-size: 0.85rem; color: #7f8c8d">
+          <strong>Experiment:</strong> Try changing temperature, adding particles, or changing the container strength.
       </div>
     `;
   }
@@ -414,6 +409,8 @@ document.addEventListener('DOMContentLoaded', function () {
     boxHeight = 300;
     document.getElementById('boxWidth').value = boxWidth;
     document.getElementById('boxHeight').value = boxHeight;
+    document.getElementById('boxWidthInput').value = boxWidth;
+    document.getElementById('boxHeightInput').value = boxHeight;
     document.getElementById('boxWidthValue').textContent = boxWidth;
     document.getElementById('boxHeightValue').textContent = boxHeight;
 
@@ -421,24 +418,19 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('pressureValue').style.color = '#3498db';
     document.getElementById('explosionStats').style.display = 'none';
 
-    resizeCanvas();
+    // Center the box
+    centerBox();
     updateGasLawExplanation();
   }
 
   function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw the container box
     drawBox();
 
     if (!isExploded) {
       handleCollisions();
     }
-
-    particles.forEach((p) => {
-      p.update();
-      p.draw();
-    });
 
     for (let i = particles.length - 1; i >= 0; i--) {
       particles[i].update();
@@ -461,42 +453,27 @@ document.addEventListener('DOMContentLoaded', function () {
     requestAnimationFrame(animate);
   }
 
-  // Helper function for explosion sound
-  function playExplosionSound() {
-    try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      oscillator.type = 'sawtooth';
-      oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(1, audioContext.currentTime + 0.8);
-
-      gainNode.gain.setValueAtTime(0.6, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
-
-      oscillator.start();
-      oscillator.stop(audioContext.currentTime + 0.8);
-    } catch (e) {
-      console.log('AudioContext not supported or error playing sound:', e);
-    }
-  }
-
   // Event listeners
   document.getElementById('boxWidth').addEventListener('input', function () {
-    boxWidth = parseInt(this.value);
+    boxWidth = Math.min(parseInt(this.value), MAX_BOX_SIZE);
+    document.getElementById('boxWidthInput').value = boxWidth;
     document.getElementById('boxWidthValue').textContent = boxWidth;
-    resizeCanvas();
+    centerBox();
+    calculateVolume();
+    updatePressure();
   });
 
   document.getElementById('boxHeight').addEventListener('input', function () {
-    boxHeight = parseInt(this.value);
+    boxHeight = Math.min(parseInt(this.value), MAX_BOX_SIZE);
+    document.getElementById('boxHeightInput').value = boxHeight;
     document.getElementById('boxHeightValue').textContent = boxHeight;
-    resizeCanvas();
+    centerBox();
+    calculateVolume();
+    updatePressure();
   });
+
+  document.getElementById('boxWidthInput').addEventListener('change', updateBoxDimensions);
+  document.getElementById('boxHeightInput').addEventListener('change', updateBoxDimensions);
 
   document.getElementById('particleCount').addEventListener('input', function () {
     particleCount = parseInt(this.value);
@@ -564,5 +541,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Initialize
   handleResize();
+  centerBox();
   animate();
 });

@@ -13,110 +13,47 @@
 }
 
 html, body {
-  overflow-x: hidden; /* Prevent horizontal scrolling */
-  width: 100%;
-}
-
-
-body {
-  font-family:
-    'Inter',
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
-  background-color: var(--background);
   margin: 0;
   padding: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--background);
   color: var(--text);
   line-height: 1.6;
 }
 
 .container {
-  /* Update container styles */
   width: 100%;
-  max-width: 1800px;
-  margin: 2rem auto;
-  padding: 0 1rem; /* Add padding to prevent edge sticking */
-  box-sizing: border-box; /* Include padding in width calculation */
-}
-
-/* Three Column Layout */
-.three-column-layout {
-  display: flex;
-  gap: 1rem; /* Reduced gap for smaller screens */
-  width: 100%;
-  flex-wrap: wrap; /* Allow columns to wrap on small screens */
-}
-
-.left-column, .right-column {
-  flex: 1;
-  min-width: 280px;
-  max-width: 100%; /* Allow columns to shrink */
-}
-
-.middle-column {
-  flex: 2;
-  min-width: 0; /* Important for flexbox shrinking */
-  width: 100%; /* Take full width */
-}
-
-.right-column {
-  flex: 1;
-  min-width: 300px;
-  max-width: 350px;
-}
-
-/* Left Column Styles */
-.law-explanation-card {
-  background-color: var(--surface);
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-  height: 100%;
-}
-
-.law-explanation-card h2 {
-  color: var(--primary);
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  font-size: 1.5rem;
-  text-align: center;
-}
-
-.law-card {
-  background-color: var(--background);
+  height: 100vh; /* Full viewport height */
   padding: 1rem;
-  border-radius: 8px;
-  border-left: 4px solid var(--primary);
-  margin-bottom: 1rem;
-}
-
-.law-card h3 {
-  color: var(--secondary);
-  margin-top: 0;
-  font-size: 1.1rem;
-}
-
-.law-card ul {
-  padding-left: 1.2rem;
-  font-size: 0.9rem;
-}
-
-.law-card li {
-  margin-bottom: 0.5rem;
-}
-
-/* Middle Column Styles */
-.simulation-display {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   gap: 1rem;
 }
 
-/* Update the .canvas-container styles */
+.simulation-section {
+  display: flex;
+  flex: 1;
+  gap: 1rem;
+  min-height: 0;
+  height: 70vh; /* 70% of viewport height */
+}
+
+.simulation-container {
+  flex: 2;
+  display: flex;
+  min-width: 0;
+  height: 100%;
+}
+
 .canvas-container {
   position: relative;
   background-color: #0f0f15;
@@ -124,17 +61,164 @@ body {
   overflow: hidden;
   border: 1px solid var(--border);
   width: 100%;
-  max-width: 100%; /* Ensure it doesn't overflow */
-  margin: 0 auto;
-  aspect-ratio: 1 / 1; /* Maintain square ratio */
+  height: 100%;
 }
-/* Update the canvas styles */
+
 #particleCanvas {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Prevent stretching */
 }
+
+.controls-column {
+  flex: 1;
+  min-width: 300px;
+  max-width: 350px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pressure-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface);
+  padding: 1.25rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  justify-content: center;
+}
+
+#pressureValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-family: 'Roboto Mono', monospace;
+  background: rgba(67, 97, 238, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  min-width: 80px;
+  text-align: center;
+  color: var(--primary);
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  background: var(--surface);
+  padding: 1.25rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  height: 100%;
+  overflow-y: auto;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.input-with-slider {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.input-with-slider input[type='number'] {
+  width: 70px;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.9rem;
+}
+
+.control-group input[type='number'] {
+  width: calc(100% - 10px - 0.75rem);
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.9rem;
+}
+
+input[type='range'] {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  background: var(--border);
+  border-radius: 3px;
+  outline: none;
+  flex-grow: 1;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--primary);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+input[type='range']::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  background: var(--primary-dark);
+}
+
+button {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+button:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+#resetButton {
+  background-color: var(--accent);
+}
+
+#resetButton:hover {
+  background-color: #e5177b;
+}
+
+.info-section {
+  background-color: var(--surface);
+  padding: 1.25rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.dimension-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.dimension-controls input[type="number"] {
+  width: 80px;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: 'Roboto Mono', monospace;
+}
+
 
 .simulation-info {
   display: flex;
@@ -171,216 +255,18 @@ body {
   font-size: 0.85rem;
 }
 
-.applications-section {
-  background-color: var(--surface);
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-}
-
-.applications-section h2 {
-  color: var(--primary);
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  font-size: 1.5rem;
-  text-align: center;
-}
-
-.applications-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.application-card {
-  background-color: var(--background);
-  padding: 1rem;
-  border-radius: 8px;
-  transition: transform 0.3s ease;
-}
-
-.application-card:hover {
-  transform: translateY(-3px);
-}
-
-.application-icon {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.application-card h3 {
-  color: var(--secondary);
-  margin-top: 0;
-  margin-bottom: 0.5rem;
-  font-size: 1rem;
-}
-
-.application-card p {
-  font-size: 0.85rem;
-  margin-bottom: 0;
-}
-
-/* Right Column Styles */
-.pressure-display {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: var(--surface);
-  padding: 1.25rem;
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-  justify-content: center;
-  margin-bottom: 1.5rem;
-}
-
-#pressureValue {
-  font-size: 1.75rem;
-  font-weight: 700;
-  font-family: 'Roboto Mono', monospace;
-  background: rgba(67, 97, 238, 0.1);
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  min-width: 80px;
-  text-align: center;
-  color: var(--primary);
-}
-
-.controls {
-  display: flex;
-  flex-direction: column;
-  gap: .5rem;
-}
-
-.control-group {
-  background-color: var(--surface);
-  padding: 1.25rem;
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  border: 1px solid var(--border);
-}
-
-.input-with-slider {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.input-with-slider input[type='number'] {
-  width: 70px;
-  padding: 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.9rem;
-}
-
-.control-group input[type='number'] {
-  width: calc(100% - 10px - 0.75rem);
-  padding: 0.5rem;
-  margin-bottom: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.9rem;
-}
-
-input[type='range'] {
-  width: 100%;
-  height: 6px;
-  -webkit-appearance: none;
-  background: var(--border);
-  border-radius: 3px;
-  outline: none;
-  flex-grow: 1;
-}
-
-input[type='range']::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
-  background: var(--primary);
-  border-radius: 50%;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-input[type='range']::-webkit-slider-thumb:hover {
-  transform: scale(1.15);
-  background: var(--primary-dark);
-}
-
-.scrollable-law-section {
-        height: calc(100vh - 40px); /* Adjust based on your layout */
-        overflow-y: auto;
-        padding-right: 10px;
-      }
-      .scrollable-law-section::-webkit-scrollbar {
-        width: 8px;
-      }
-      .scrollable-law-section::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
-      }
-      .scrollable-law-section::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 4px;
-      }
-      .scrollable-law-section::-webkit-scrollbar-thumb:hover {
-        background: #555;
-      }
-
-button {
-  background-color: var(--primary);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all 0.2s;
-  width: 100%;
-}
-
-button:hover {
-  background-color: var(--primary-dark);
-  transform: translateY(-1px);
-}
-
-#resetButton {
-  background-color: var(--accent);
-}
-
-#resetButton:hover {
-  background-color: #e5177b;
-}
-
-/* Responsive adjustments */
-@media (max-width: 1200px) {
-  .three-column-layout {
-    flex-direction: column;
-  }
-  
-  .left-column, .middle-column, .right-column {
-    width: 100%;
-    max-width: 100%;
-  }
-}
-
 @media (max-width: 768px) {
-  .container {
-    padding: 0 0.5rem;
-    margin: 1rem auto;
+  .simulation-section {
+    flex-direction: column;
+    height: auto;
   }
   
-  .canvas-container {
-    padding-bottom: 100%; /* Keep square on mobile */
+  .simulation-container {
+    height: 60vh;
   }
   
-  .law-explanation-card, .applications-section, .control-group {
-    padding: 1rem;
+  .controls-column {
+    max-width: 100%;
   }
 }
 
