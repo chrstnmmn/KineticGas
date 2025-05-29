@@ -1,0 +1,219 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Kinetic Gas Simulation</title>
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+    />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./assets/style.css" />
+    <style>
+      /* Additional style for scrollable law section */
+      .scrollable-law-section {
+        height: calc(100vh - 40px); /* Adjust based on your layout */
+        overflow-y: auto;
+        padding-right: 10px;
+      }
+      .scrollable-law-section::-webkit-scrollbar {
+        width: 8px;
+      }
+      .scrollable-law-section::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+      .scrollable-law-section::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+      }
+      .scrollable-law-section::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <main>
+        <div class="three-column-layout">
+          <!-- Left Column - Gas Law Explanation -->
+          <div class="left-column">
+            <div class="law-explanation-card scrollable-law-section">
+              <h2>Gas Law Principles</h2>
+              <div class="law-card">
+                <h3>Ideal Gas Law (PV = nRT)</h3>
+                <p>This fundamental equation relates:</p>
+                <ul>
+                  <li>
+                    <strong>Pressure (P):</strong> Force exerted by gas particles on container walls
+                  </li>
+                  <li><strong>Volume (V):</strong> Space available for gas particles to move</li>
+                  <li><strong>Amount (n):</strong> Number of moles of gas particles</li>
+                  <li>
+                    <strong>Temperature (T):</strong>
+                    Average kinetic energy of particles
+                  </li>
+                  <li><strong>R:</strong> Ideal gas constant (8.314 J/mol·K)</li>
+                </ul>
+              </div>
+
+              <div class="law-card">
+                <h3>Boyle's Law (P ∝ 1/V)</h3>
+                <p>At constant temperature:</p>
+                <ul>
+                  <li>Decreasing volume increases pressure (more collisions)</li>
+                  <li>Increasing volume decreases pressure (fewer collisions)</li>
+                </ul>
+              </div>
+
+              <div class="law-card">
+                <h3>Charles's Law (V ∝ T)</h3>
+                <p>At constant pressure:</p>
+                <ul>
+                  <li>
+                    Higher temperature increases volume (particles move faster and push outward)
+                  </li>
+                  <li>Lower temperature decreases volume</li>
+                </ul>
+              </div>
+
+              <div class="law-card">
+                <h3>Gay-Lussac's Law (P ∝ T)</h3>
+                <p>At constant volume:</p>
+                <ul>
+                  <li>Higher temperature increases pressure (faster particles hit walls harder)</li>
+                  <li>Lower temperature decreases pressure</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Middle Column - Simulation and Info -->
+          <div class="middle-column">
+            <div class="simulation-display">
+              <div class="canvas-container" id="gasContainer">
+                <canvas id="particleCanvas"></canvas>
+              </div>
+              <div class="simulation-info">
+                <div id="gasLawExplanation" class="law-summary">
+                  <strong>Current Simulation:</strong> P = nRT/V<br />
+                  Adjust container size, temperature, or add particles to observe changes.
+                </div>
+                <div id="explosionStats" class="explosion-stats" style="display: none">
+                  <h3>Explosion Statistics</h3>
+                  <p>
+                    Maximum Volume:
+                    <span id="maxVolumeValue">0</span> m³
+                  </p>
+                  <p>
+                    Pressure at Explosion:
+                    <span id="explosionPressureValue">0</span>
+                    kPa
+                  </p>
+                  <p>
+                    Particles at Explosion:
+                    <span id="explosionParticlesValue">0</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="applications-section">
+              <h2>Real-World Applications</h2>
+              <div class="applications-grid">
+                <div class="application-card">
+                  <div class="application-icon">🏭</div>
+                  <h3>Industrial Pressure Vessels</h3>
+                  <p>
+                    The same principles you see in this simulation govern real pressure vessels used
+                    in chemical plants, scuba tanks, and propane cylinders.
+                  </p>
+                </div>
+
+                <div class="application-card">
+                  <div class="application-icon">🌡️</div>
+                  <h3>Weather Systems</h3>
+                  <p>
+                    Atmospheric pressure changes that drive weather patterns follow these same gas
+                    laws.
+                  </p>
+                </div>
+
+                <div class="application-card">
+                  <div class="application-icon">🚗</div>
+                  <h3>Automobile Engines</h3>
+                  <p>
+                    Your car's engine relies on controlled explosions where fuel vapor mixes with
+                    air.
+                  </p>
+                </div>
+
+                <div class="application-card">
+                  <div class="application-icon">💨</div>
+                  <h3>Medical Ventilators</h3>
+                  <p>
+                    Ventilators that help patients breathe carefully control gas pressure and
+                    volume.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column - Controls -->
+          <div class="right-column">
+            <div class="pressure-display">
+              <span class="pressure-label">Pressure:</span>
+              <div id="pressureValue">101.3</div>
+              <span class="pressure-unit">kPa</span>
+              <span class="max-pressure">
+                (Max:
+                <span id="maxPressureValue">1000</span> kPa)
+              </span>
+            </div>
+
+            <div class="controls">
+              <div class="control-group">
+                <label for="temperature">
+                  Temperature:
+                  <span id="temperatureValue">300</span>K
+                </label>
+                <div class="input-with-slider">
+                  <input type="number" id="temperatureInput" min="1" value="300" step="1" />
+                  <input type="range" id="temperature" min="0" max="30" value="10" />
+                </div>
+              </div>
+
+              <div class="control-group">
+                <label for="containerStrength">
+                  Container Strength:
+                  <span id="strengthValue">1000</span> kPa
+                </label>
+                <div class="input-with-slider">
+                  <input type="number" id="strengthInput" min="1" value="1000" step="10" />
+                  <input type="range" id="containerStrength" min="1" max="2000" value="1000" />
+                </div>
+              </div>
+
+              <div class="control-group">
+                <label for="particleCount">Particles to Add:</label>
+                <input type="number" id="particleCount" min="1" value="5" step="1" />
+                <button id="addGasButton">Add Gas Particles</button>
+              </div>
+
+              <button id="resetButton">Reset Simulation</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="./src/particle-simulation.js"></script>
+  </body>
+</html>
